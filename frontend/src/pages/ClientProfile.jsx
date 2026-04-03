@@ -183,7 +183,21 @@ function ClientProfile() {
                             </span>
                           </td>
                           <td>
-                            <button onClick={() => navigate(`/inquiries/${inq.id}`)} className="btn" style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', borderColor: '#fff' }}>Open Chat</button>
+                            <button onClick={() => navigate(`/inquiries/${inq.id}`)} className="btn" style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', borderColor: '#fff', position: 'relative' }}>
+                              Open Chat
+                              {inq.message_count > 0 && (
+                                <span style={{
+                                  position: 'absolute', top: '-8px', right: '-8px',
+                                  background: 'var(--color-neon-red)', color: '#fff',
+                                  borderRadius: '50%', width: '20px', height: '20px',
+                                  fontSize: '0.7rem', fontWeight: 'bold',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  fontFamily: 'var(--font-body)', boxShadow: '0 0 6px var(--color-neon-red-glow)'
+                                }}>
+                                  {inq.message_count > 99 ? '99+' : inq.message_count}
+                                </span>
+                              )}
+                            </button>
                           </td>
                         </tr>
                       ))}

@@ -1,14 +1,30 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import axios from 'axios';
 
 function Navbar() {
   const { user, logout } = useContext(AuthContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [totalMessages, setTotalMessages] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
   const isActive = (path) => location.pathname === path ? 'active' : '';
+
+  useEffect(() => {
+    if (!user) { setTotalMessages(0); return; }
+    const fetchCounts = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/inquiries');
+        const total = res.data.reduce((sum, inq) => sum + (inq.message_count || 0), 0);
+        setTotalMessages(total);
+      } catch (_) {}
+    };
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 15000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -16,9 +32,7 @@ function Navbar() {
     navigate('/');
   };
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <nav className="navbar">
@@ -50,11 +64,39 @@ function Navbar() {
             <>
               {user.role === 'client' ? (
                 <li className={`nav-item ${isActive('/profile')}`}>
-                  <Link to="/profile" className="neon-text" onClick={closeMobileMenu}>Profile</Link>
+                  <Link to="/profile" className="neon-text" onClick={closeMobileMenu} style={{ position: 'relative' }}>
+                    Profile
+                    {totalMessages > 0 && (
+                      <span style={{
+                        position: 'absolute', top: '-10px', right: '-14px',
+                        background: 'var(--color-neon-red)', color: '#fff',
+                        borderRadius: '50%', width: '18px', height: '18px',
+                        fontSize: '0.65rem', fontWeight: 'bold',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: 'var(--font-body)', boxShadow: '0 0 6px var(--color-neon-red-glow)'
+                      }}>
+                        {totalMessages > 99 ? '99+' : totalMessages}
+                      </span>
+                    )}
+                  </Link>
                 </li>
               ) : (
                 <li className={`nav-item ${isActive('/admin')}`}>
-                  <Link to="/admin" className="neon-text" onClick={closeMobileMenu}>Dashboard</Link>
+                  <Link to="/admin" className="neon-text" onClick={closeMobileMenu} style={{ position: 'relative' }}>
+                    Dashboard
+                    {totalMessages > 0 && (
+                      <span style={{
+                        position: 'absolute', top: '-10px', right: '-14px',
+                        background: 'var(--color-neon-red)', color: '#fff',
+                        borderRadius: '50%', width: '18px', height: '18px',
+                        fontSize: '0.65rem', fontWeight: 'bold',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: 'var(--font-body)', boxShadow: '0 0 6px var(--color-neon-red-glow)'
+                      }}>
+                        {totalMessages > 99 ? '99+' : totalMessages}
+                      </span>
+                    )}
+                  </Link>
                 </li>
               )}
               <li className="nav-item">

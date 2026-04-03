@@ -68,13 +68,38 @@ function ManageInquiries({ type }) {
                   <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{inq.client_email}</div>
                 </td>
                 <td>
-                  <span style={{ color: inq.status === 'completed' ? '#00ff00' : 'var(--color-neon-red)', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                  <span style={{
+                    display: 'inline-block', padding: '0.25rem 0.6rem', borderRadius: '4px',
+                    fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase',
+                    background: inq.status === 'completed' ? 'rgba(0,255,0,0.1)' : 'rgba(255,42,42,0.1)',
+                    color: inq.status === 'completed' ? '#00ff00' : 'var(--color-neon-red)',
+                    border: `1px solid ${inq.status === 'completed' ? '#00ff00' : 'var(--color-neon-red)'}`,
+                  }}>
                     {inq.status}
                   </span>
                 </td>
                 <td>{new Date(inq.created_at).toLocaleDateString()}</td>
                 <td>
-                  <button onClick={() => navigate(`/inquiries/${inq.id}`)} className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', marginRight: '0.5rem', borderColor: '#fff' }}>Open Chat</button>
+                  {/* Open Chat with message count badge */}
+                  <button
+                    onClick={() => navigate(`/inquiries/${inq.id}`)}
+                    className="btn"
+                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', marginRight: '0.5rem', borderColor: '#fff', position: 'relative' }}
+                  >
+                    Open Chat
+                    {inq.message_count > 0 && (
+                      <span style={{
+                        position: 'absolute', top: '-8px', right: '-8px',
+                        background: 'var(--color-neon-red)', color: '#fff',
+                        borderRadius: '50%', width: '20px', height: '20px',
+                        fontSize: '0.7rem', fontWeight: 'bold',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: 'var(--font-body)', boxShadow: '0 0 6px var(--color-neon-red-glow)'
+                      }}>
+                        {inq.message_count > 99 ? '99+' : inq.message_count}
+                      </span>
+                    )}
+                  </button>
                   <button onClick={() => toggleStatus(inq.id, inq.status)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
                     Mark {inq.status === 'pending' ? 'Completed' : 'Pending'}
                   </button>

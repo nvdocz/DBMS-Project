@@ -259,10 +259,14 @@ app.get('/api/inquiries', verifyToken, (req, res) => {
   const typeFilter = req.query.type;
 
   if (req.user.role === 'client') {
-    query = `SELECT i.*, c.make, c.model, c.year, c.imageUrl FROM inquiries i JOIN cars c ON i.car_id = c.id WHERE i.client_id = ?`;
+    query = `SELECT i.*, c.make, c.model, c.year, c.imageUrl,
+      (SELECT COUNT(*) FROM inquiry_messages WHERE inquiry_id = i.id) as message_count
+      FROM inquiries i JOIN cars c ON i.car_id = c.id WHERE i.client_id = ?`;
     params.push(req.user.id);
   } else {
-    query = `SELECT i.*, c.make, c.model, c.year, c.imageUrl, u.name as client_name, u.email as client_email FROM inquiries i JOIN cars c ON i.car_id = c.id JOIN users u ON i.client_id = u.id WHERE 1=1`;
+    query = `SELECT i.*, c.make, c.model, c.year, c.imageUrl, u.name as client_name, u.email as client_email,
+      (SELECT COUNT(*) FROM inquiry_messages WHERE inquiry_id = i.id) as message_count
+      FROM inquiries i JOIN cars c ON i.car_id = c.id JOIN users u ON i.client_id = u.id WHERE 1=1`;
   }
 
   if (typeFilter) {

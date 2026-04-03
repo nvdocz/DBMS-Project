@@ -57,11 +57,7 @@ function ManageBookings() {
     }
   };
 
-  const toggleStatus = async (id, currentStatus) => {
-    const statuses = ['confirmed', 'completed', 'cancelled'];
-    const currentIndex = statuses.indexOf(currentStatus);
-    const newStatus = statuses[(currentIndex + 1) % statuses.length];
-    
+  const updateStatus = async (id, newStatus) => {
     try {
       await axios.patch(`http://localhost:5000/api/bookings/${id}/status`, { status: newStatus });
       fetchBookings();
@@ -168,18 +164,28 @@ function ManageBookings() {
                 </td>
                 <td style={{ fontWeight: 'bold' }}>₹{b.total_price.toLocaleString('en-IN')}</td>
                 <td>
-                  <span style={{ 
-                    color: b.status === 'completed' ? '#00ff00' : (b.status === 'confirmed' ? 'var(--color-text-primary)' : 'var(--color-neon-red)'), 
-                    textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 'bold' 
+                  <span style={{
+                    display: 'inline-block', padding: '0.25rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase',
+                    background: b.status === 'completed' ? 'rgba(0,255,0,0.1)' : b.status === 'confirmed' ? 'rgba(255,255,255,0.08)' : 'rgba(255,42,42,0.1)',
+                    color: b.status === 'completed' ? '#00ff00' : b.status === 'confirmed' ? 'var(--color-text-primary)' : 'var(--color-neon-red)',
+                    border: `1px solid ${b.status === 'completed' ? '#00ff00' : b.status === 'confirmed' ? '#555' : 'var(--color-neon-red)'}`,
                   }}>
                     {b.status}
                   </span>
                 </td>
                 <td>
-                  <button onClick={() => toggleStatus(b.id, b.status)} className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
-                    Change Status
-                  </button>
-                  <button onClick={() => deleteBooking(b.id)} className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', marginLeft: '0.5rem', borderColor: 'var(--color-neon-red)', color: 'var(--color-neon-red)' }}>
+                  <select
+                    value={b.status}
+                    onChange={(e) => updateStatus(b.id, e.target.value)}
+                    className="form-input"
+                    style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem', width: 'auto', marginBottom: '0.5rem' }}
+                  >
+                    <option value="confirmed">Confirmed</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <br />
+                  <button onClick={() => deleteBooking(b.id)} className="btn" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', borderColor: 'var(--color-neon-red)', color: 'var(--color-neon-red)' }}>
                     Delete
                   </button>
                 </td>
