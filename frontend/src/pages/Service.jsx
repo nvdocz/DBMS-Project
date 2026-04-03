@@ -70,6 +70,7 @@ function Service() {
             <option value="Full Inspection">Full Diagnostics & Inspection</option>
             <option value="Engine Tuning">Performance Tuning</option>
             <option value="Detailing">Premium Detailing</option>
+            <option value="Car Wash">Premium Car Wash</option>
           </select>
         </div>
 

@@ -15,6 +15,10 @@ import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageCars from './pages/admin/ManageCars';
 import ManageUsers from './pages/admin/ManageUsers';
+import ManageInquiries from './pages/admin/ManageInquiries';
+import ManageBookings from './pages/admin/ManageBookings';
+import ManageServices from './pages/admin/ManageServices';
+import InquiryChat from './pages/InquiryChat';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -31,6 +35,11 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<ClientProfile />} />
+          <Route path="/inquiries/:id" element={
+            <ProtectedRoute reqRoles={['client', 'ceo', 'manager', 'marketing', 'delivery']}>
+              <InquiryChat />
+            </ProtectedRoute>
+          } />
 
           {/* Admin Protected Routes */}
           <Route path="/admin" element={
@@ -47,6 +56,26 @@ function App() {
             <Route path="users" element={
               <ProtectedRoute reqRoles={['ceo', 'manager']}>
                 <ManageUsers />
+              </ProtectedRoute>
+            } />
+            <Route path="sales-inquiries" element={
+              <ProtectedRoute reqRoles={['ceo', 'manager', 'marketing', 'delivery']}>
+                <ManageInquiries type="sales" />
+              </ProtectedRoute>
+            } />
+            <Route path="rent-inquiries" element={
+              <ProtectedRoute reqRoles={['ceo', 'manager', 'marketing', 'delivery']}>
+                <ManageInquiries type="rentals" />
+              </ProtectedRoute>
+            } />
+            <Route path="bookings" element={
+              <ProtectedRoute reqRoles={['ceo', 'manager', 'marketing', 'delivery']}>
+                <ManageBookings />
+              </ProtectedRoute>
+            } />
+            <Route path="services" element={
+              <ProtectedRoute reqRoles={['ceo', 'manager', 'marketing', 'delivery']}>
+                <ManageServices />
               </ProtectedRoute>
             } />
           </Route>

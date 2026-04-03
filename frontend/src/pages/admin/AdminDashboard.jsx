@@ -4,20 +4,23 @@ import { AuthContext } from '../../context/AuthContext';
 
 function AdminDashboard() {
   const { user } = useContext(AuthContext);
-  const [stats, setStats] = useState({ cars: 0, contacts: 0, services: 0 });
+  const [stats, setStats] = useState({ cars: 0, contacts: 0, services: 0, pendingInquiries: 0 });
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [carsRes, contactsRes, servicesRes] = await Promise.all([
+        const [carsRes, contactsRes, servicesRes, inquiriesRes] = await Promise.all([
           axios.get('http://localhost:5000/api/cars'),
           axios.get('http://localhost:5000/api/contacts'),
-          axios.get('http://localhost:5000/api/services')
+          axios.get('http://localhost:5000/api/services'),
+          axios.get('http://localhost:5000/api/inquiries')
         ]);
+        const pending = inquiriesRes.data.filter(i => i.status === 'pending').length;
         setStats({
           cars: carsRes.data.length,
           contacts: contactsRes.data.length,
-          services: servicesRes.data.length
+          services: servicesRes.data.length,
+          pendingInquiries: pending
         });
       } catch (err) {
         console.error("Failed to load stats", err);
@@ -47,7 +50,7 @@ function AdminDashboard() {
           <div className="card-body" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
             <h3 style={{ color: 'var(--color-text-secondary)' }}>Pending Inquiries</h3>
             <div style={{ fontSize: '4rem', fontWeight: 'bold', color: 'var(--color-neon-red)', marginTop: '1rem' }}>
-              {stats.contacts}
+              {stats.pendingInquiries}
             </div>
           </div>
         </div>

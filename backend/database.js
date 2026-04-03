@@ -62,8 +62,15 @@ const db = new sqlite3.Database(dbPath, (err) => {
         date TEXT NOT NULL,
         type TEXT NOT NULL,
         message TEXT,
+        status TEXT DEFAULT 'pending',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`);
+      )`, (err) => {
+        if (!err) {
+          db.run(`ALTER TABLE services ADD COLUMN status TEXT DEFAULT 'pending'`, () => {
+            // Ignore if column already exists
+          });
+        }
+      });
 
       // Inquiries Table
       db.run(`CREATE TABLE IF NOT EXISTS inquiries (
@@ -85,6 +92,20 @@ const db = new sqlite3.Database(dbPath, (err) => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (inquiry_id) REFERENCES inquiries (id),
         FOREIGN KEY (sender_id) REFERENCES users (id)
+      )`);
+
+      // Bookings Table
+      db.run(`CREATE TABLE IF NOT EXISTS bookings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        car_id INTEGER NOT NULL,
+        client_id INTEGER NOT NULL,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        total_price REAL NOT NULL,
+        status TEXT DEFAULT 'confirmed', -- 'confirmed', 'completed', 'cancelled'
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (car_id) REFERENCES cars (id),
+        FOREIGN KEY (client_id) REFERENCES users (id)
       )`);
     });
   }

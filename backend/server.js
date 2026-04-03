@@ -181,10 +181,54 @@ app.get('/api/contacts', verifyToken, (req, res) => {
 
 // GET all services
 app.get('/api/services', verifyToken, (req, res) => {
-  db.all('SELECT * FROM services ORDER BY created_at DESC', [], (err, rows) => {
+  const { email } = req.query;
+  let query = 'SELECT * FROM services';
+  const params = [];
+  
+  if (req.user.role === 'client') {
+    query += ' WHERE email = ?';
+    params.push(req.user.email);
+  } else if (email) {
+    query += ' WHERE email = ?';
+    params.push(email);
+  }
+
+  query += ' ORDER BY created_at DESC';
+
+  db.all(query, params, (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
+});
+
+// Update Service Status
+app.patch('/api/services/:id/status', verifyToken, (req, res) => {
+  const { status } = req.body;
+  if (!['pending', 'progress', 'completed', 'cancelled'].includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+
+  // Clients can only cancel
+  if (req.user.role === 'client' && status !== 'cancelled') {
+    return res.status(403).json({ error: 'Clients can only cancel appointments' });
+  }
+
+  if (req.user.role === 'client') {
+    db.get('SELECT * FROM services WHERE id = ? AND email = ?', [req.params.id, req.user.email], (err, service) => {
+       if (err) return res.status(500).json({ error: err.message });
+       if (!service) return res.status(403).json({ error: 'Forbidden' });
+       db.run('UPDATE services SET status = ? WHERE id = ?', [status, req.params.id], function(err) {
+         if (err) return res.status(500).json({ error: err.message });
+         res.json({ success: true });
+       });
+    });
+  } else {
+    // Admins
+    db.run('UPDATE services SET status = ? WHERE id = ?', [status, req.params.id], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
+    });
+  }
 });
 
 // --- INQUIRIES ---
@@ -212,13 +256,21 @@ app.post('/api/inquiries', verifyToken, (req, res) => {
 app.get('/api/inquiries', verifyToken, (req, res) => {
   let query = '';
   const params = [];
+  const typeFilter = req.query.type;
 
   if (req.user.role === 'client') {
-    query = `SELECT i.*, c.make, c.model, c.year, c.imageUrl FROM inquiries i JOIN cars c ON i.car_id = c.id WHERE i.client_id = ? ORDER BY i.created_at DESC`;
+    query = `SELECT i.*, c.make, c.model, c.year, c.imageUrl FROM inquiries i JOIN cars c ON i.car_id = c.id WHERE i.client_id = ?`;
     params.push(req.user.id);
   } else {
-    query = `SELECT i.*, c.make, c.model, c.year, u.name as client_name, u.email as client_email FROM inquiries i JOIN cars c ON i.car_id = c.id JOIN users u ON i.client_id = u.id ORDER BY i.created_at DESC`;
+    query = `SELECT i.*, c.make, c.model, c.year, c.imageUrl, u.name as client_name, u.email as client_email FROM inquiries i JOIN cars c ON i.car_id = c.id JOIN users u ON i.client_id = u.id WHERE 1=1`;
   }
+
+  if (typeFilter) {
+    query += ` AND c.type = ?`;
+    params.push(typeFilter);
+  }
+
+  query += ` ORDER BY i.created_at DESC`;
 
   db.all(query, params, (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -273,6 +325,119 @@ app.patch('/api/inquiries/:id/status', verifyToken, hasRole(['ceo', 'manager', '
   if (!['pending', 'completed'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
 
   db.run('UPDATE inquiries SET status = ? WHERE id = ?', [status, req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+
+app.delete('/api/inquiries/:id', verifyToken, hasRole(['ceo', 'manager', 'marketing', 'delivery']), (req, res) => {
+  db.run('DELETE FROM inquiry_messages WHERE inquiry_id = ?', [req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    db.run('DELETE FROM inquiries WHERE id = ?', [req.params.id], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
+    });
+  });
+});
+
+// --- BOOKINGS ---
+app.get('/api/bookings', verifyToken, (req, res) => {
+  let query = `
+    SELECT b.*, c.make, c.model, c.year, c.price, c.imageUrl, u.name as client_name, u.email as client_email 
+    FROM bookings b 
+    JOIN cars c ON b.car_id = c.id 
+    JOIN users u ON b.client_id = u.id 
+  `;
+  const params = [];
+  
+  if (req.user.role === 'client') {
+    query += ' WHERE b.client_id = ? ';
+    params.push(req.user.id);
+  }
+
+  query += ' ORDER BY b.created_at DESC ';
+
+  db.all(query, params, (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+app.post('/api/bookings/check', (req, res) => {
+  const { car_id, start_date, end_date } = req.body;
+  
+  db.all(
+    `SELECT start_date, end_date FROM bookings WHERE car_id = ? AND status != 'cancelled'`,
+    [car_id],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      
+      const requestedStart = new Date(start_date);
+      const requestedEnd = new Date(end_date);
+      
+      let isAvailable = true;
+      let nextAvailableDate = null;
+      
+      for (let b of rows) {
+        if (!b.start_date || !b.end_date) continue;
+        const bStart = new Date(b.start_date);
+        const bEnd = new Date(b.end_date);
+        
+        if (requestedEnd >= bStart && requestedStart <= bEnd) {
+          isAvailable = false;
+          const possibleNext = new Date(bEnd);
+          possibleNext.setDate(possibleNext.getDate() + 1);
+          if (!nextAvailableDate || possibleNext > nextAvailableDate) {
+            nextAvailableDate = possibleNext;
+          }
+        }
+      }
+      
+      if (isAvailable) {
+        res.json({ available: true });
+      } else {
+        res.json({ available: false, nextAvailableDate: nextAvailableDate ? nextAvailableDate.toISOString().split('T')[0] : null });
+      }
+    }
+  );
+});
+
+app.post('/api/bookings', verifyToken, (req, res) => {
+  const { car_id, start_date, end_date, total_price } = req.body;
+  const client_id = req.user.role === 'client' ? req.user.id : req.body.client_id;
+  
+  if (!car_id || !client_id || !start_date || !end_date || total_price === undefined) {
+    return res.status(400).json({ error: 'All fields required' });
+  }
+
+  db.get(
+    `SELECT id FROM bookings WHERE car_id = ? AND status != 'cancelled' AND (? <= end_date AND ? >= start_date)`,
+    [car_id, start_date, end_date],
+    (err, overlap) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (overlap) return res.status(400).json({ error: 'Dates are already booked' });
+      
+      const query = 'INSERT INTO bookings (car_id, client_id, start_date, end_date, total_price) VALUES (?, ?, ?, ?, ?)';
+      db.run(query, [car_id, client_id, start_date, end_date, total_price], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, success: true });
+      });
+    }
+  );
+});
+
+app.patch('/api/bookings/:id/status', verifyToken, hasRole(['ceo', 'manager', 'marketing', 'delivery']), (req, res) => {
+  const { status } = req.body;
+  if (!['confirmed', 'completed', 'cancelled'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+
+  db.run('UPDATE bookings SET status = ? WHERE id = ?', [status, req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+
+app.delete('/api/bookings/:id', verifyToken, hasRole(['ceo', 'manager', 'marketing', 'delivery']), (req, res) => {
+  db.run('DELETE FROM bookings WHERE id = ?', [req.params.id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
   });

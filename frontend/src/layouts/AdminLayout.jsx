@@ -16,7 +16,10 @@ function AdminLayout() {
     { name: 'Dashboard', path: '/admin', roles: ['ceo', 'manager', 'marketing', 'delivery'] },
     { name: 'Manage Cars', path: '/admin/cars', roles: ['ceo', 'manager', 'marketing'] },
     { name: 'Manage Users', path: '/admin/users', roles: ['ceo', 'manager'] },
-    { name: 'Inquiries', path: '/admin/inquiries', roles: ['ceo', 'manager', 'marketing', 'delivery'] }
+    { name: 'Sales Inquiries', path: '/admin/sales-inquiries', roles: ['ceo', 'manager', 'marketing', 'delivery'] },
+    { name: 'Rent Inquiries', path: '/admin/rent-inquiries', roles: ['ceo', 'manager', 'marketing', 'delivery'] },
+    { name: 'Bookings', path: '/admin/bookings', roles: ['ceo', 'manager', 'marketing', 'delivery'] },
+    { name: 'Service Appointments', path: '/admin/services', roles: ['ceo', 'manager', 'marketing', 'delivery'] }
   ];
 
   return (
