@@ -163,6 +163,31 @@ app.post('/api/cars', verifyToken, hasRole(['ceo', 'manager', 'marketing']), upl
   });
 });
 
+// UPDATE a car (CEO, Manager, Marketing)
+app.put('/api/cars/:id', verifyToken, hasRole(['ceo', 'manager', 'marketing']), (req, res) => {
+  // Use multer only if content-type is multipart (image upload), else use already-parsed JSON body
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.includes('multipart/form-data')) {
+    upload.single('image')(req, res, (err) => {
+      if (err) return res.status(400).json({ error: err.message });
+      const { make, model, year, price, description, type } = req.body;
+      const imageUrl = req.file ? `http://localhost:5000/uploads/${req.file.filename}` : null;
+      const query = 'UPDATE cars SET make=?, model=?, year=?, price=?, description=?, type=?, imageUrl=? WHERE id=?';
+      db.run(query, [make, model, year, price, description, type, imageUrl, req.params.id], function(dbErr) {
+        if (dbErr) return res.status(500).json({ error: dbErr.message });
+        res.json({ success: true });
+      });
+    });
+  } else {
+    const { make, model, year, price, description, type } = req.body;
+    const query = 'UPDATE cars SET make=?, model=?, year=?, price=?, description=?, type=? WHERE id=?';
+    db.run(query, [make, model, year, price, description, type, req.params.id], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true });
+    });
+  }
+});
+
 // DELETE a car (CEO, Manager, Marketing)
 app.delete('/api/cars/:id', verifyToken, hasRole(['ceo', 'manager', 'marketing']), (req, res) => {
   db.run('DELETE FROM cars WHERE id = ?', [req.params.id], function(err) {
@@ -176,6 +201,22 @@ app.get('/api/contacts', verifyToken, (req, res) => {
   db.all('SELECT * FROM contacts ORDER BY created_at DESC', [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
+  });
+});
+
+// PATCH mark contact as read
+app.patch('/api/contacts/:id/read', verifyToken, (req, res) => {
+  db.run('UPDATE contacts SET is_read = 1 WHERE id = ?', [req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+
+// DELETE a contact message
+app.delete('/api/contacts/:id', verifyToken, hasRole(['ceo', 'manager', 'marketing', 'delivery']), (req, res) => {
+  db.run('DELETE FROM contacts WHERE id = ?', [req.params.id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
   });
 });
 
@@ -260,13 +301,22 @@ app.get('/api/inquiries', verifyToken, (req, res) => {
 
   if (req.user.role === 'client') {
     query = `SELECT i.*, c.make, c.model, c.year, c.imageUrl,
-      (SELECT COUNT(*) FROM inquiry_messages WHERE inquiry_id = i.id) as message_count
+      (SELECT COUNT(*) FROM inquiry_messages m
+        WHERE m.inquiry_id = i.id
+        AND m.sender_id != ?
+        AND m.id > COALESCE((SELECT last_read_message_id FROM inquiry_reads WHERE inquiry_id = i.id AND user_id = ?), 0)
+      ) as unread_count
       FROM inquiries i JOIN cars c ON i.car_id = c.id WHERE i.client_id = ?`;
-    params.push(req.user.id);
+    params.push(req.user.id, req.user.id, req.user.id);
   } else {
     query = `SELECT i.*, c.make, c.model, c.year, c.imageUrl, u.name as client_name, u.email as client_email,
-      (SELECT COUNT(*) FROM inquiry_messages WHERE inquiry_id = i.id) as message_count
+      (SELECT COUNT(*) FROM inquiry_messages m
+        WHERE m.inquiry_id = i.id
+        AND m.sender_id != ?
+        AND m.id > COALESCE((SELECT last_read_message_id FROM inquiry_reads WHERE inquiry_id = i.id AND user_id = ?), 0)
+      ) as unread_count
       FROM inquiries i JOIN cars c ON i.car_id = c.id JOIN users u ON i.client_id = u.id WHERE 1=1`;
+    params.push(req.user.id, req.user.id);
   }
 
   if (typeFilter) {
@@ -319,8 +369,28 @@ app.post('/api/inquiries/:id/messages', verifyToken, (req, res) => {
 
     db.run('INSERT INTO inquiry_messages (inquiry_id, sender_id, message) VALUES (?, ?, ?)', [inquiryId, req.user.id, message], function(err) {
       if (err) return res.status(500).json({ error: err.message });
+      // Auto mark-as-read for the sender after sending
+      const newMsgId = this.lastID;
+      db.run(`INSERT INTO inquiry_reads (inquiry_id, user_id, last_read_message_id) VALUES (?, ?, ?)
+              ON CONFLICT(inquiry_id, user_id) DO UPDATE SET last_read_message_id = excluded.last_read_message_id`,
+        [inquiryId, req.user.id, newMsgId]);
       res.json({ success: true, message: 'Sent' });
     });
+  });
+});
+
+// Mark all messages in an inquiry as read for the current user
+app.post('/api/inquiries/:id/read', verifyToken, (req, res) => {
+  const inquiryId = req.params.id;
+  db.get('SELECT MAX(id) as max_id FROM inquiry_messages WHERE inquiry_id = ?', [inquiryId], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    const maxId = row?.max_id || 0;
+    db.run(`INSERT INTO inquiry_reads (inquiry_id, user_id, last_read_message_id) VALUES (?, ?, ?)
+            ON CONFLICT(inquiry_id, user_id) DO UPDATE SET last_read_message_id = excluded.last_read_message_id`,
+      [inquiryId, req.user.id, maxId], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+      });
   });
 });
 

@@ -50,8 +50,13 @@ const db = new sqlite3.Database(dbPath, (err) => {
         name TEXT NOT NULL,
         email TEXT NOT NULL,
         message TEXT NOT NULL,
+        is_read INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`);
+      )`, () => {
+        db.run(`ALTER TABLE contacts ADD COLUMN is_read INTEGER DEFAULT 0`, () => {
+          // Ignore if column already exists
+        });
+      });
 
       // Services Table
       db.run(`CREATE TABLE IF NOT EXISTS services (
@@ -92,6 +97,14 @@ const db = new sqlite3.Database(dbPath, (err) => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (inquiry_id) REFERENCES inquiries (id),
         FOREIGN KEY (sender_id) REFERENCES users (id)
+      )`);
+
+      // Inquiry Reads Table — tracks last read message per user per inquiry
+      db.run(`CREATE TABLE IF NOT EXISTS inquiry_reads (
+        inquiry_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        last_read_message_id INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (inquiry_id, user_id)
       )`);
 
       // Bookings Table

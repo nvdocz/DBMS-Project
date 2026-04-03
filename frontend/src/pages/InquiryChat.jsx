@@ -26,6 +26,8 @@ function InquiryChat() {
       setInquiry(resp.data.inquiry);
       setMessages(resp.data.messages);
       setLoading(false);
+      // Mark all messages as read as soon as the chat is visible
+      axios.post(`http://localhost:5000/api/inquiries/${id}/read`).catch(() => {});
     } catch (err) {
       console.error(err);
       if (err.response?.status === 403 || err.response?.status === 401) {

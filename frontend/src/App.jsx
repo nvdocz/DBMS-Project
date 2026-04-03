@@ -18,6 +18,7 @@ import ManageUsers from './pages/admin/ManageUsers';
 import ManageInquiries from './pages/admin/ManageInquiries';
 import ManageBookings from './pages/admin/ManageBookings';
 import ManageServices from './pages/admin/ManageServices';
+import ManageContacts from './pages/admin/ManageContacts';
 import InquiryChat from './pages/InquiryChat';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -76,6 +77,11 @@ function App() {
             <Route path="services" element={
               <ProtectedRoute reqRoles={['ceo', 'manager', 'marketing', 'delivery']}>
                 <ManageServices />
+              </ProtectedRoute>
+            } />
+            <Route path="contacts" element={
+              <ProtectedRoute reqRoles={['ceo', 'manager', 'marketing', 'delivery']}>
+                <ManageContacts />
               </ProtectedRoute>
             } />
           </Route>
