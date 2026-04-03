@@ -1,0 +1,68 @@
+import React, { useState, useEffect, useContext } from 'react';
+import axios from 'axios';
+import { AuthContext } from '../../context/AuthContext';
+
+function AdminDashboard() {
+  const { user } = useContext(AuthContext);
+  const [stats, setStats] = useState({ cars: 0, contacts: 0, services: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [carsRes, contactsRes, servicesRes] = await Promise.all([
+          axios.get('http://localhost:5000/api/cars'),
+          axios.get('http://localhost:5000/api/contacts'),
+          axios.get('http://localhost:5000/api/services')
+        ]);
+        setStats({
+          cars: carsRes.data.length,
+          contacts: contactsRes.data.length,
+          services: servicesRes.data.length
+        });
+      } catch (err) {
+        console.error("Failed to load stats", err);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="animate-fade-in">
+      <h1 className="neon-text" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>Welcome, {user.name}</h1>
+      <p style={{ color: 'var(--color-text-secondary)', marginBottom: '3rem' }}>
+        Here's what is happening at nv.drive today.
+      </p>
+
+      <div className="grid">
+        <div className="card">
+          <div className="card-body" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+            <h3 style={{ color: 'var(--color-text-secondary)' }}>Total Vehicles</h3>
+            <div style={{ fontSize: '4rem', fontWeight: 'bold', color: 'var(--color-neon-red)', marginTop: '1rem' }}>
+              {stats.cars}
+            </div>
+          </div>
+        </div>
+        
+        <div className="card">
+          <div className="card-body" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+            <h3 style={{ color: 'var(--color-text-secondary)' }}>Pending Inquiries</h3>
+            <div style={{ fontSize: '4rem', fontWeight: 'bold', color: 'var(--color-neon-red)', marginTop: '1rem' }}>
+              {stats.contacts}
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-body" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+            <h3 style={{ color: 'var(--color-text-secondary)' }}>Service Appointments</h3>
+            <div style={{ fontSize: '4rem', fontWeight: 'bold', color: 'var(--color-neon-red)', marginTop: '1rem' }}>
+              {stats.services}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default AdminDashboard;
