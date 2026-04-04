@@ -69,12 +69,12 @@ function BookingModal({ car, onClose, onSuccess }) {
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 2000, padding: '1rem'
+      zIndex: 2000, padding: '1rem', overflowY: 'auto'
     }}>
-      <div style={{
+      <div className="booking-modal-inner" style={{
         background: 'var(--color-surface)', border: '1px solid var(--color-neon-red)',
-        borderRadius: '8px', padding: '2rem', width: '100%', maxWidth: '480px',
-        boxShadow: '0 0 30px var(--color-neon-red-glow)'
+        borderRadius: '8px', padding: '1.75rem', width: '100%', maxWidth: '480px',
+        boxShadow: '0 0 30px var(--color-neon-red-glow)', margin: 'auto'
       }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>

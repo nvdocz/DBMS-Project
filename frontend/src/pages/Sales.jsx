@@ -27,20 +27,18 @@ function Sales() {
 
   return (
     <div className="container animate-fade-in" style={{ padding: '4rem 2rem' }}>
-      <h1 className="neon-text" style={{ fontSize: '3rem', marginBottom: '2rem', textAlign: 'center' }}>
+      <h1 className="neon-text" style={{ fontSize: 'clamp(1.8rem, 6vw, 3rem)', marginBottom: '1rem', textAlign: 'center' }}>
         Showroom Collection
       </h1>
-      <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: '3rem', maxWidth: '800px', margin: '0 auto' }}>
+      <p className="page-subtitle">
         Purchase your next masterpiece. Our curated collection features the world's most desired exotic and performance cars.
       </p>
 
-      {/* Filteration Process */}
-      <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '4rem' }}>
-        <input 
-          type="text" 
-          className="form-input" 
-          placeholder="Search make or model..." 
-          style={{ maxWidth: '400px' }}
+      <form onSubmit={handleSearch} className="search-form">
+        <input
+          type="text"
+          className="form-input"
+          placeholder="Search make or model..."
           value={searchPath}
           onChange={(e) => setSearchPath(e.target.value)}
         />
