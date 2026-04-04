@@ -12,7 +12,7 @@ function Sales() {
 
   const fetchCars = async (searchParams = '') => {
     try {
-      const url = "http://localhost:5000/api/cars?type=sales" + (searchParams ? "&search=" + searchParams : "");
+      const url = "/api/cars?type=sales" + (searchParams ? "&search=" + searchParams : "");
       const response = await axios.get(url);
       setCars(response.data);
     } catch (error) {

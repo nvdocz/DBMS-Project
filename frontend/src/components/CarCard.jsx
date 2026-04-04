@@ -21,7 +21,7 @@ function CarCard({ car }) {
       return;
     }
     try {
-      const resp = await axios.post('http://localhost:5000/api/inquiries', { car_id: car.id });
+      const resp = await axios.post('/api/inquiries', { car_id: car.id });
       navigate(`/inquiries/${resp.data.id}`);
     } catch (err) {
       alert("Failed to start inquiry: " + (err.response?.data?.error || err.message));

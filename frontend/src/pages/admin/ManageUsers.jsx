@@ -12,7 +12,7 @@ function ManageUsers() {
 
   const fetchUsers = async () => {
     try {
-      const resp = await axios.get('http://localhost:5000/api/users');
+      const resp = await axios.get('/api/users');
       setUsers(resp.data);
     } catch (err) {
       console.error(err);
@@ -25,7 +25,7 @@ function ManageUsers() {
     e.preventDefault();
     try {
       setStatus('Creating user...');
-      await axios.post('http://localhost:5000/api/users', formData);
+      await axios.post('/api/users', formData);
       setStatus('Successfully added user!');
       fetchUsers();
       setFormData({ name: '', email: '', password: '', role: 'marketing' });
@@ -38,7 +38,7 @@ function ManageUsers() {
   const handleDelete = async (id) => {
     if(!window.confirm('Are you sure you want to disable/delete this user?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/users/${id}`);
+      await axios.delete(`/api/users/${id}`);
       fetchUsers();
     } catch (err) {
       alert('Error deleting user: ' + err.message);
@@ -48,7 +48,7 @@ function ManageUsers() {
   const handleStatusChange = async (id, currentStatus) => {
     const newStatus = currentStatus === 'blocked' ? 'active' : 'blocked';
     try {
-      await axios.patch(`http://localhost:5000/api/users/${id}/status`, { status: newStatus });
+      await axios.patch(`/api/users/${id}/status`, { status: newStatus });
       fetchUsers();
     } catch (err) {
       alert('Error updating status: ' + err.message);

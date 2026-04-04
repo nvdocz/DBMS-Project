@@ -37,7 +37,7 @@ function ManageBookings() {
 
   const fetchBookings = async () => {
     try {
-      const resp = await axios.get('http://localhost:5000/api/bookings');
+      const resp = await axios.get('/api/bookings');
       setBookings(resp.data);
     } catch (err) {
       console.error("Failed to load bookings", err);
@@ -47,8 +47,8 @@ function ManageBookings() {
   const fetchDependencies = async () => {
     try {
       const [carsRes, usersRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/cars'),
-        axios.get('http://localhost:5000/api/users')
+        axios.get('/api/cars'),
+        axios.get('/api/users')
       ]);
       setCars(carsRes.data.filter(c => c.type === 'rentals'));
       setClients(usersRes.data.filter(u => u.role === 'client'));
@@ -59,7 +59,7 @@ function ManageBookings() {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      await axios.patch(`http://localhost:5000/api/bookings/${id}/status`, { status: newStatus });
+      await axios.patch(`/api/bookings/${id}/status`, { status: newStatus });
       fetchBookings();
     } catch(err) {
       alert("Error updating: " + err.message);
@@ -69,7 +69,7 @@ function ManageBookings() {
   const deleteBooking = async (id) => {
     if (!window.confirm("Are you sure you want to permanently delete this booking?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/bookings/${id}`);
+      await axios.delete(`/api/bookings/${id}`);
       fetchBookings();
     } catch(err) {
       alert("Error deleting booking: " + (err.response?.data?.error || err.message));
@@ -79,7 +79,7 @@ function ManageBookings() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/bookings', formData);
+      await axios.post('/api/bookings', formData);
       setIsCreating(false);
       setFormData({ car_id: '', client_id: '', start_date: '', end_date: '', total_price: '' });
       fetchBookings();

@@ -10,7 +10,7 @@ function ManageServices() {
 
   const fetchServices = async () => {
     try {
-      const resp = await axios.get('http://localhost:5000/api/services');
+      const resp = await axios.get('/api/services');
       setServices(resp.data);
     } catch (err) {
       console.error(err);
@@ -23,7 +23,7 @@ function ManageServices() {
     const newStatus = statuses[(currentIndex + 1) % statuses.length];
     
     try {
-      await axios.patch(`http://localhost:5000/api/services/${id}/status`, { status: newStatus });
+      await axios.patch(`/api/services/${id}/status`, { status: newStatus });
       fetchServices();
     } catch(err) {
       alert("Error updating: " + err.message);

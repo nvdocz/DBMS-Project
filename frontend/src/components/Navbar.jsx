@@ -16,7 +16,7 @@ function Navbar() {
     if (!user) { setTotalMessages(0); return; }
     const fetchCounts = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/inquiries');
+        const res = await axios.get('/api/inquiries');
         const total = res.data.reduce((sum, inq) => sum + (inq.unread_count || 0), 0);
         setTotalMessages(total);
       } catch (_) {}

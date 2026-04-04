@@ -32,7 +32,7 @@ function BookingModal({ car, onClose, onSuccess }) {
     setError('');
     setChecking(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/bookings/check', {
+      const res = await axios.post('/api/bookings/check', {
         car_id: car.id,
         start_date: startDate,
         end_date: endDate,
@@ -51,7 +51,7 @@ function BookingModal({ car, onClose, onSuccess }) {
     setSubmitting(true);
     setError('');
     try {
-      await axios.post('http://localhost:5000/api/bookings', {
+      await axios.post('/api/bookings', {
         car_id: car.id,
         start_date: startDate,
         end_date: endDate,

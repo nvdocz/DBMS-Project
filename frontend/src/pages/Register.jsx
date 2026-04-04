@@ -13,7 +13,7 @@ function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/auth/register', formData);
+      await axios.post('/api/auth/register', formData);
       setSuccess('Registration successful! You can now log in.');
       setError('');
       setTimeout(() => navigate('/login'), 2000);

@@ -17,7 +17,7 @@ function Service() {
     e.preventDefault();
     setStatus('submitting');
     try {
-      await axios.post('http://localhost:5000/api/services', formData);
+      await axios.post('/api/services', formData);
       setStatus('success');
       setFormData({ name: '', email: '', phone: '', date: '', type: 'Oil Change', message: '' });
       setTimeout(() => setStatus(''), 3000);

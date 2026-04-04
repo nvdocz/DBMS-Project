@@ -12,10 +12,10 @@ function AdminDashboard() {
     const fetchStats = async () => {
       try {
         const [carsRes, contactsRes, servicesRes, inquiriesRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/cars'),
-          axios.get('http://localhost:5000/api/contacts'),
-          axios.get('http://localhost:5000/api/services'),
-          axios.get('http://localhost:5000/api/inquiries')
+          axios.get('/api/cars'),
+          axios.get('/api/contacts'),
+          axios.get('/api/services'),
+          axios.get('/api/inquiries')
         ]);
         const pending = inquiriesRes.data.filter(i => i.status === 'pending').length;
         const unread = contactsRes.data.filter(c => !c.is_read).length;

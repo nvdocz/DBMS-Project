@@ -18,11 +18,11 @@ function AdminLayout() {
   const fetchBadges = async () => {
     try {
       const [salesRes, rentRes, bookingsRes, servicesRes, contactsRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/inquiries?type=sales'),
-        axios.get('http://localhost:5000/api/inquiries?type=rentals'),
-        axios.get('http://localhost:5000/api/bookings'),
-        axios.get('http://localhost:5000/api/services'),
-        axios.get('http://localhost:5000/api/contacts'),
+        axios.get('/api/inquiries?type=sales'),
+        axios.get('/api/inquiries?type=rentals'),
+        axios.get('/api/bookings'),
+        axios.get('/api/services'),
+        axios.get('/api/contacts'),
       ]);
 
       setBadges({

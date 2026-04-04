@@ -11,7 +11,7 @@ function ManageContacts() {
 
   const fetchContacts = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/contacts');
+      const res = await axios.get('/api/contacts');
       setContacts(res.data);
     } catch (err) {
       console.error(err);
@@ -20,7 +20,7 @@ function ManageContacts() {
 
   const markRead = async (id) => {
     try {
-      await axios.patch(`http://localhost:5000/api/contacts/${id}/read`);
+      await axios.patch(`/api/contacts/${id}/read`);
       setContacts(prev => prev.map(c => c.id === id ? { ...c, is_read: 1 } : c));
     } catch (err) {
       console.error(err);
@@ -30,7 +30,7 @@ function ManageContacts() {
   const deleteContact = async (id) => {
     if (!window.confirm('Delete this message?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/contacts/${id}`);
+      await axios.delete(`/api/contacts/${id}`);
       setContacts(prev => prev.filter(c => c.id !== id));
       if (expanded === id) setExpanded(null);
     } catch (err) {

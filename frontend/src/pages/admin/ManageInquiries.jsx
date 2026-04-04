@@ -12,7 +12,7 @@ function ManageInquiries({ type }) {
 
   const fetchInquiries = async () => {
     try {
-      const url = type ? `http://localhost:5000/api/inquiries?type=${type}` : 'http://localhost:5000/api/inquiries';
+      const url = type ? `/api/inquiries?type=${type}` : '/api/inquiries';
       const resp = await axios.get(url);
       setInquiries(resp.data);
     } catch (err) {
@@ -23,7 +23,7 @@ function ManageInquiries({ type }) {
   const toggleStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === 'pending' ? 'completed' : 'pending';
     try {
-      await axios.patch(`http://localhost:5000/api/inquiries/${id}/status`, { status: newStatus });
+      await axios.patch(`/api/inquiries/${id}/status`, { status: newStatus });
       fetchInquiries();
     } catch(err) {
       alert("Error updating: " + err.message);
@@ -33,7 +33,7 @@ function ManageInquiries({ type }) {
   const deleteInquiry = async (id) => {
     if (!window.confirm("Are you sure you want to permanently delete this inquiry?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/inquiries/${id}`);
+      await axios.delete(`/api/inquiries/${id}`);
       fetchInquiries();
     } catch(err) {
       alert("Error deleting inquiry: " + (err.response?.data?.error || err.message));

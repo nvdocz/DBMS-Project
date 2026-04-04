@@ -22,12 +22,12 @@ function InquiryChat() {
 
   const fetchChat = async () => {
     try {
-      const resp = await axios.get(`http://localhost:5000/api/inquiries/${id}/messages`);
+      const resp = await axios.get(`/api/inquiries/${id}/messages`);
       setInquiry(resp.data.inquiry);
       setMessages(resp.data.messages);
       setLoading(false);
       // Mark all messages as read as soon as the chat is visible
-      axios.post(`http://localhost:5000/api/inquiries/${id}/read`).catch(() => {});
+      axios.post(`/api/inquiries/${id}/read`).catch(() => {});
     } catch (err) {
       console.error(err);
       if (err.response?.status === 403 || err.response?.status === 401) {
@@ -41,7 +41,7 @@ function InquiryChat() {
     if (!newMessage.trim()) return;
 
     try {
-      await axios.post(`http://localhost:5000/api/inquiries/${id}/messages`, { message: newMessage });
+      await axios.post(`/api/inquiries/${id}/messages`, { message: newMessage });
       setNewMessage('');
       fetchChat();
     } catch (err) {
@@ -52,7 +52,7 @@ function InquiryChat() {
   const toggleStatus = async () => {
     const newStatus = inquiry.status === 'pending' ? 'completed' : 'pending';
     try {
-      await axios.patch(`http://localhost:5000/api/inquiries/${id}/status`, { status: newStatus });
+      await axios.patch(`/api/inquiries/${id}/status`, { status: newStatus });
       fetchChat();
     } catch (err) {
       alert('Error updating status');

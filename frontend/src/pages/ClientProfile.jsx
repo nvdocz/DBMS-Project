@@ -13,16 +13,16 @@ function ClientProfile() {
 
   useEffect(() => {
     if (user && user.role === 'client') {
-      axios.get('http://localhost:5000/api/inquiries').then(res => setInquiries(res.data)).catch(err => console.error(err));
-      axios.get(`http://localhost:5000/api/services?email=${user.email}`).then(res => setServices(res.data)).catch(err => console.error(err));
-      axios.get(`http://localhost:5000/api/bookings`).then(res => setBookings(res.data)).catch(err => console.error(err));
+      axios.get('/api/inquiries').then(res => setInquiries(res.data)).catch(err => console.error(err));
+      axios.get(`/api/services?email=${user.email}`).then(res => setServices(res.data)).catch(err => console.error(err));
+      axios.get(`/api/bookings`).then(res => setBookings(res.data)).catch(err => console.error(err));
     }
   }, [user]);
 
   const cancelService = async (id) => {
     if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
     try {
-      await axios.patch(`http://localhost:5000/api/services/${id}/status`, { status: 'cancelled' });
+      await axios.patch(`/api/services/${id}/status`, { status: 'cancelled' });
       setServices(services.map(s => s.id === id ? { ...s, status: 'cancelled' } : s));
     } catch (err) {
       alert("Error cancelling appointment: " + (err.response?.data?.error || err.message));

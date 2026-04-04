@@ -11,7 +11,7 @@ function Contact() {
     e.preventDefault();
     setStatus('submitting');
     try {
-      await axios.post('http://localhost:5000/api/contact', formData);
+      await axios.post('/api/contact', formData);
       setStatus('success');
       setFormData({ name: '', email: '', message: '' });
       setTimeout(() => setStatus(''), 3000);

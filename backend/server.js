@@ -152,8 +152,8 @@ app.post('/api/services', (req, res) => {
 app.post('/api/cars', verifyToken, hasRole(['ceo', 'manager', 'marketing']), upload.single('image'), (req, res) => {
   const { make, model, year, price, description, type } = req.body;
   
-  // imageUrl can either be the uploaded local file path, or the existing ones if we are expanding.
-  const imageUrl = req.file ? `http://localhost:5000/uploads/${req.file.filename}` : null;
+  const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+  const imageUrl = req.file ? `${BASE_URL}/uploads/${req.file.filename}` : null;
   if (!imageUrl) return res.status(400).json({ error: 'Image file is required' });
 
   const query = 'INSERT INTO cars (make, model, year, price, description, imageUrl, type) VALUES (?, ?, ?, ?, ?, ?, ?)';
@@ -171,7 +171,7 @@ app.put('/api/cars/:id', verifyToken, hasRole(['ceo', 'manager', 'marketing']), 
     upload.single('image')(req, res, (err) => {
       if (err) return res.status(400).json({ error: err.message });
       const { make, model, year, price, description, type } = req.body;
-      const imageUrl = req.file ? `http://localhost:5000/uploads/${req.file.filename}` : null;
+      const imageUrl = req.file ? `${process.env.BASE_URL || 'http://localhost:5000'}/uploads/${req.file.filename}` : null;
       const query = 'UPDATE cars SET make=?, model=?, year=?, price=?, description=?, type=?, imageUrl=? WHERE id=?';
       db.run(query, [make, model, year, price, description, type, imageUrl, req.params.id], function(dbErr) {
         if (dbErr) return res.status(500).json({ error: dbErr.message });

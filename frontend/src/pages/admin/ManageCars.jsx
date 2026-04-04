@@ -16,7 +16,7 @@ function ManageCars() {
 
   const fetchCars = async () => {
     try {
-      const resp = await axios.get('http://localhost:5000/api/cars');
+      const resp = await axios.get('/api/cars');
       setCars(resp.data);
     } catch (err) {
       console.error(err);
@@ -34,7 +34,7 @@ function ManageCars() {
     data.append('image', image);
     try {
       setStatus('Uploading...');
-      await axios.post('http://localhost:5000/api/cars', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await axios.post('/api/cars', data, { headers: { 'Content-Type': 'multipart/form-data' } });
       setStatus('Successfully added car!');
       fetchCars();
       setFormData({ make: '', model: '', year: '', price: '', description: '', type: 'sales' });
@@ -49,7 +49,7 @@ function ManageCars() {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this car?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/cars/${id}`);
+      await axios.delete(`/api/cars/${id}`);
       fetchCars();
     } catch (err) {
       alert('Error deleting car: ' + err.message);
@@ -81,12 +81,12 @@ function ManageCars() {
         data.append('description', editingCar.description);
         data.append('type', editingCar.type);
         data.append('image', editImage);
-        await axios.put(`http://localhost:5000/api/cars/${editingCar.id}`, data, {
+        await axios.put(`/api/cars/${editingCar.id}`, data, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
       } else {
         // plain JSON when no image change — avoids multer issues
-        await axios.put(`http://localhost:5000/api/cars/${editingCar.id}`, {
+        await axios.put(`/api/cars/${editingCar.id}`, {
           make: editingCar.make,
           model: editingCar.model,
           year: editingCar.year,
