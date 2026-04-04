@@ -6,21 +6,38 @@ const pool = require('./database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const { v2: cloudinary } = require('cloudinary');
 const { verifyToken, hasRole, JWT_SECRET } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+
+// Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Multer — memory storage, no local disk writes
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Helper: upload buffer to Cloudinary, returns secure URL
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'nvdrive/cars' },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+};
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
-});
-const upload = multer({ storage });
 
 // ── AUTH ────────────────────────────────────────────────────────────────────
 
@@ -102,9 +119,9 @@ app.get('/api/cars', async (req, res) => {
 
 app.post('/api/cars', verifyToken, hasRole(['ceo', 'manager', 'marketing']), upload.single('image'), async (req, res) => {
   const { make, model, year, price, description, type } = req.body;
-  const imageUrl = req.file ? `${BASE_URL}/uploads/${req.file.filename}` : null;
-  if (!imageUrl) return res.status(400).json({ error: 'Image file is required' });
+  if (!req.file) return res.status(400).json({ error: 'Image file is required' });
   try {
+    const imageUrl = await uploadToCloudinary(req.file.buffer);
     const { rows } = await pool.query(
       `INSERT INTO cars (make, model, year, price, description, "imageUrl", type) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
       [make, model, year, price, description, imageUrl, type]
@@ -113,31 +130,19 @@ app.post('/api/cars', verifyToken, hasRole(['ceo', 'manager', 'marketing']), upl
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/cars/:id', verifyToken, hasRole(['ceo', 'manager', 'marketing']), (req, res) => {
-  const contentType = req.headers['content-type'] || '';
-  if (contentType.includes('multipart/form-data')) {
-    upload.single('image')(req, res, async (err) => {
-      if (err) return res.status(400).json({ error: err.message });
-      const { make, model, year, price, description, type } = req.body;
-      const imageUrl = req.file ? `${BASE_URL}/uploads/${req.file.filename}` : null;
-      try {
-        if (imageUrl) {
-          await pool.query(`UPDATE cars SET make=$1,model=$2,year=$3,price=$4,description=$5,type=$6,"imageUrl"=$7 WHERE id=$8`,
-            [make, model, year, price, description, type, imageUrl, req.params.id]);
-        } else {
-          await pool.query(`UPDATE cars SET make=$1,model=$2,year=$3,price=$4,description=$5,type=$6 WHERE id=$7`,
-            [make, model, year, price, description, type, req.params.id]);
-        }
-        res.json({ success: true });
-      } catch (e) { res.status(500).json({ error: e.message }); }
-    });
-  } else {
-    const { make, model, year, price, description, type } = req.body;
-    pool.query(`UPDATE cars SET make=$1,model=$2,year=$3,price=$4,description=$5,type=$6 WHERE id=$7`,
-      [make, model, year, price, description, type, req.params.id])
-      .then(() => res.json({ success: true }))
-      .catch(e => res.status(500).json({ error: e.message }));
-  }
+app.put('/api/cars/:id', verifyToken, hasRole(['ceo', 'manager', 'marketing']), upload.single('image'), async (req, res) => {
+  const { make, model, year, price, description, type } = req.body;
+  try {
+    if (req.file) {
+      const imageUrl = await uploadToCloudinary(req.file.buffer);
+      await pool.query(`UPDATE cars SET make=$1,model=$2,year=$3,price=$4,description=$5,type=$6,"imageUrl"=$7 WHERE id=$8`,
+        [make, model, year, price, description, type, imageUrl, req.params.id]);
+    } else {
+      await pool.query(`UPDATE cars SET make=$1,model=$2,year=$3,price=$4,description=$5,type=$6 WHERE id=$7`,
+        [make, model, year, price, description, type, req.params.id]);
+    }
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/cars/:id', verifyToken, hasRole(['ceo', 'manager', 'marketing']), async (req, res) => {
